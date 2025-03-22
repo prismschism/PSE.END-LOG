@@ -12,7 +12,6 @@ END::LOG is a mission logging system built with Python, Textual, and Rich.
 
 ------Setup Instructions-----------------------------
 
-```bash
 git clone https://github.com/prismschism/PSE.END-LOG
 cd PSE.END-LOG
 python -m venv .venv
