@@ -85,12 +85,12 @@ class EnduranceLogApp(App):
         spacer = Static("", classes="spacer", markup=False)
         spacer.styles.display = "block"
 
-        # Mount spacer so ScrollView has a child
+        # Mount spacer so ScrollView has a child (Ensures initial view is blank)
         self.viewer.mount(spacer)
 
-        # Then append your startup log
-        self.viewer.append_log(
-            "[END::LOG SYSTEM ONLINE] :: Awaiting input...")
+        # Then append system startup log
+        self.system_log("SYSTEM LAUNCH")
+        self.system_log("ENDURANCE LOG SYSTEM ONLINE")
 
     ##### ======On Input Submitted Method======#####
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -106,8 +106,8 @@ class EnduranceLogApp(App):
             timestamp = now.strftime(
                 "%Y-%m-%d %H:%M:%S.") + f"{int(now.microsecond / 1000):03d}"
 
-            # Combine timestamp and message
-            full_entry = f"[{timestamp}] :: {log_entry}"
+            # Combine timestamp and message for log entries.
+            full_entry = f"[{timestamp}] [LOG] :: {log_entry}"
 
             # Display in the terminal UI
             self.viewer.append_log(full_entry)
@@ -150,6 +150,22 @@ class EnduranceLogApp(App):
         with open(log_path, "w") as f:
             json.dump(logs, f, indent=2)
 
+    ##### ======System Log Method======#####
+    def system_log(self, message: str) -> None:
+
+        # Generate precise timestamp
+        now = datetime.now()
+        timestamp = now.strftime(
+            "%Y-%m-%d %H:%M:%S.") + f"{int(now.microsecond / 1000):03d}"
+
+        # Combine timestamp and message for log entries.
+        system_entry = f"[{timestamp}] [SYSTEM] :: {message}"
+
+        # Display in the terminal UI
+        self.viewer.append_log(system_entry)
+
+        # Save to file
+        self.save_log(system_entry)
 # ==================================================
 # Launch the App
 # ==================================================
