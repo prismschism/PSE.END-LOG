@@ -112,7 +112,7 @@ class EnduranceLogApp(App):
                 "%Y-%m-%d %H:%M:%S.") + f"{int(now.microsecond / 1000):03d}"
 
             # Combine timestamp and message for log entries.
-            full_entry = f"[{timestamp}] [LOG] :: {log_entry}"
+            full_entry = f"[{timestamp}] [LOG]    :: {log_entry}"
 
             # Display in the terminal UI
             self.viewer.append_log(full_entry)
@@ -126,7 +126,7 @@ class EnduranceLogApp(App):
     ##### ======On Key Method======#####
     def on_key(self, event: Key) -> None:
         # DEBUG
-        self.system_log(f"[DEBUG] Key pressed: {event.key}")
+        self.debug_log(f"Key pressed: {event.key}")
 
         # If already awaiting shutdown confirmation
         if self.awaiting_shutdown_confirmation:
@@ -191,6 +191,19 @@ class EnduranceLogApp(App):
 
         # Save to file
         self.save_log(system_entry)
+
+    def debug_log(self, message: str) -> None:
+
+        # Generate precise timestamp
+        now = datetime.now()
+        timestamp = now.strftime(
+            "%Y-%m-%d %H:%M:%S.") + f"{int(now.microsecond / 1000):03d}"
+        # DEBUG message entry stamp
+        debug_entry = f"[{timestamp}] [DEBUG]  :: {message}"
+        # Display in terminal UI
+        self.viewer.append_log(debug_entry)
+        # Save to file
+        self.save_log(debug_entry)
 
 
 # ==================================================
