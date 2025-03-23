@@ -9,6 +9,7 @@ from textual.widgets import Header, Footer, Input, Static
 from textual.scroll_view import ScrollView
 from textual.containers import Vertical
 from datetime import datetime
+import asyncio
 import os
 import json
 
@@ -77,6 +78,7 @@ class EnduranceLogApp(App):
         yield Footer()
 
     ##### ======On Mount Method======#####
+
     def on_mount(self) -> None:
         """
         Runs on app start. Ensures the log storage folder exists.
@@ -107,9 +109,8 @@ class EnduranceLogApp(App):
 
         if log_entry:
             # Generate a precise timestamp: [YYYY-MM-DD HH:MM:SS.mmm]
-            now = datetime.now()
-            timestamp = now.strftime(
-                "%Y-%m-%d %H:%M:%S.") + f"{int(now.microsecond / 1000):03d}"
+
+            timestamp = get_timestamp()
 
             # Combine timestamp and message for log entries.
             full_entry = f"[{timestamp}] [LOG]    :: {log_entry}"
@@ -124,21 +125,24 @@ class EnduranceLogApp(App):
         self.input.value = ""
 
     ##### ======On Key Method======#####
-    def on_key(self, event: Key) -> None:
+    async def on_key(self, event: Key) -> None:
         # DEBUG
-        self.debug_log(f"Key pressed: {event.key}")
+        # self.debug_log(f"Key pressed: {event.key}")
 
         # If already awaiting shutdown confirmation
         if self.awaiting_shutdown_confirmation:
             if event.key in ("1", "2"):
                 if event.key == "1":
-                    self.system_log("Shutdown confirmed. Exiting...")
+                    self.system_log("Shutdown confirmed. Exiting END::LOG...")
+                    # Sleeper to allow user to see the exit was recognized.
+                    await asyncio.sleep(3)
+
                     self.exit()
                 elif event.key == "2":
                     self.system_log("Shutdown aborted.")
                     self.awaiting_shutdown_confirmation = False
 
-            # If 1 or 2 not pressed, abort
+            # If key options 1 or 2 not pressed, abort
             else:
                 self.system_log("Unrecognized input. Shutdown aborted.")
                 self.awaiting_shutdown_confirmation = False  # 💥 Cancel confirmation state
@@ -153,13 +157,11 @@ class EnduranceLogApp(App):
     ##### ======Save Log Method======#####
 
     def save_log(self, entry: str) -> None:
-        """
-        Saves the given log entry to a file named by date.
-        """
 
+        # Saves the given log entry to a file named by date.
         date_str = datetime.now().strftime("%Y-%m-%d")  # File name based on date
         log_path = os.path.join(
-            LOG_FOLDER, f"END_Log_{date_str}.json")  # Full path to file
+            LOG_FOLDER, f"END_LOG_{date_str}.json")  # Full path to file
 
         # Load existing log entries if file exists, otherwise start fresh
         if os.path.exists(log_path):
@@ -179,9 +181,8 @@ class EnduranceLogApp(App):
     def system_log(self, message: str) -> None:
 
         # Generate precise timestamp
-        now = datetime.now()
-        timestamp = now.strftime(
-            "%Y-%m-%d %H:%M:%S.") + f"{int(now.microsecond / 1000):03d}"
+
+        timestamp = get_timestamp()
 
         # Combine timestamp and message for log entries.
         system_entry = f"[{timestamp}] [SYSTEM] :: {message}"
@@ -194,16 +195,26 @@ class EnduranceLogApp(App):
 
     def debug_log(self, message: str) -> None:
 
-        # Generate precise timestamp
-        now = datetime.now()
-        timestamp = now.strftime(
-            "%Y-%m-%d %H:%M:%S.") + f"{int(now.microsecond / 1000):03d}"
+        # Get precise timestamp
+        timestamp = get_timestamp()
         # DEBUG message entry stamp
         debug_entry = f"[{timestamp}] [DEBUG]  :: {message}"
         # Display in terminal UI
         self.viewer.append_log(debug_entry)
         # Save to file
         self.save_log(debug_entry)
+
+
+# ==================================================
+# Global Methods
+# ==================================================
+
+##### ======Get Timestamp Method======#####
+def get_timestamp() -> str:
+    # Get current time
+    now = datetime.now()
+    # Return formatted timestamp
+    return now.strftime("%Y-%m-%d %H:%M:%S.") + f"{int(now.microsecond / 1000):03d}"
 
 
 # ==================================================
