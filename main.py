@@ -53,7 +53,9 @@ class EnduranceLogApp(App):
     Creates the interface and handles user input, display, and storage.
     """
 
-    CSS_PATH = None  # We'll add custom styling here in Phase 3
+    CSS_PATH = None  # Will add custom styling here in Phase 3
+
+    awaiting_shutdown_confirmation = False
 
     ##### ======Compose Method======#####
     def compose(self) -> ComposeResult:
@@ -84,6 +86,9 @@ class EnduranceLogApp(App):
         # Create a spacer widget with no text
         spacer = Static("", classes="spacer", markup=False)
         spacer.styles.display = "block"
+
+        #
+        self.awaiting_shutdown_confirmation = False
 
         # Mount spacer so ScrollView has a child (Ensures initial view is blank)
         self.viewer.mount(spacer)
@@ -120,11 +125,33 @@ class EnduranceLogApp(App):
 
     ##### ======On Key Method======#####
     def on_key(self, event: Key) -> None:
-        # Exit app if ESC is pressed.
+        # DEBUG
+        self.system_log(f"Key pressed: {event.key}")
+
+        # If already awaiting shutdown confirmation
+        if self.awaiting_shutdown_confirmation:
+            if event.key in ("1", "2"):
+                if event.key == "1":
+                    self.system_log("Shutdown confirmed. Exiting...")
+                    self.exit()
+                elif event.key == "2":
+                    self.system_log("Shutdown aborted.")
+                    self.awaiting_shutdown_confirmation = False
+
+            # If 1 or 2 not pressed, abort
+            else:
+                self.system_log("Unrecognized input. Shutdown aborted.")
+                self.awaiting_shutdown_confirmation = False  # 💥 Cancel confirmation state
+            return  # Stop propagation here
+
+        # If ESC pressed to exit, prompt confirmation and switch awaiting shutdown to true
         if event.key == "escape":
-            self.exit()
+            self.awaiting_shutdown_confirmation = True
+            self.set_focus(None)
+            self.system_log("TERMINATE PROGRAM? 1. Confirm    2. Abort")
 
     ##### ======Save Log Method======#####
+
     def save_log(self, entry: str) -> None:
         """
         Saves the given log entry to a file named by date (e.g., 2025-03-21.json).
