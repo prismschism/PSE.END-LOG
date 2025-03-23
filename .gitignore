@@ -7,8 +7,9 @@ __pycache__/
 # Virtual environment
 .venv/
 
-# Logs (if stored externally or synced to Drive)
+# Test Logs ignored
 logs/
+error_logs/
 
-# Textual temp files (optional)
+# Textual temp files 
 *.tcss~
