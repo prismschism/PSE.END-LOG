@@ -126,7 +126,7 @@ class EnduranceLogApp(App):
     ##### ======On Key Method======#####
     def on_key(self, event: Key) -> None:
         # DEBUG
-        self.system_log(f"Key pressed: {event.key}")
+        self.system_log(f"[DEBUG] Key pressed: {event.key}")
 
         # If already awaiting shutdown confirmation
         if self.awaiting_shutdown_confirmation:
@@ -154,14 +154,12 @@ class EnduranceLogApp(App):
 
     def save_log(self, entry: str) -> None:
         """
-        Saves the given log entry to a file named by date (e.g., 2025-03-21.json).
-
-        Parameters:
-        - entry (str): The full formatted log string to store.
+        Saves the given log entry to a file named by date.
         """
+
         date_str = datetime.now().strftime("%Y-%m-%d")  # File name based on date
         log_path = os.path.join(
-            LOG_FOLDER, f"{date_str}.json")  # Full path to file
+            LOG_FOLDER, f"END_Log_{date_str}.json")  # Full path to file
 
         # Load existing log entries if file exists, otherwise start fresh
         if os.path.exists(log_path):
@@ -193,6 +191,8 @@ class EnduranceLogApp(App):
 
         # Save to file
         self.save_log(system_entry)
+
+
 # ==================================================
 # Launch the App
 # ==================================================
