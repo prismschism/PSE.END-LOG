@@ -1,7 +1,6 @@
 # ==================================================
 # END::LOG — Terminal-Based Mission Log System
-# Compatible with Textual v2.1.2
-# Author: Sahit
+# Author: Sahit Felix - PSE
 # ==================================================
 
 from textual.app import App, ComposeResult
