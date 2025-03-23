@@ -27,13 +27,10 @@ class LogViewer(ScrollView):
     Scrollable widget for displaying log entries.
     """
 
+    ##### ======Append Log Method======#####
+    # Appends a newly submitted log entry to the log display.
     def append_log(self, text: str) -> None:
-        """
-        Appends a new entry to the log display.
 
-        Parameters:
-        - text (str): The full log entry including timestamp.
-        """
         log_entry = Static(
             text, classes="log-entry", markup=False)  # Create a new line of text
         # Add it to the scrollable view
@@ -54,25 +51,25 @@ class EnduranceLogApp(App):
     Creates the interface and handles user input, display, and storage.
     """
 
-    CSS_PATH = None  # Will add custom styling here in Phase 3
+    CSS_PATH = "themes/endlog.tcss"  # CSS styling
 
     awaiting_shutdown_confirmation = False
 
     ##### ======Compose Method======#####
     def compose(self) -> ComposeResult:
         """
-        Defines the UI layout:
+        UI layout:
         Header, Log Display (ScrollView), Input field, Footer.
         """
         yield Header()
 
         # Vertical layout holds the viewer and input together
         with Vertical():
-            self.viewer = LogViewer()  # Log display area
+            self.viewer = LogViewer(id="log-viewer")  # Log display area
             yield self.viewer
 
             self.input = Input(
-                placeholder="Type mission log entry and press Enter...")  # Input field
+                placeholder="Type log entry and press Enter...")  # Input field
             yield self.input
 
         yield Footer()
