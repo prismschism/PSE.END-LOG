@@ -5,6 +5,7 @@
 # ==================================================
 
 from textual.app import App, ComposeResult
+from textual.events import Key
 from textual.widgets import Header, Footer, Input, Static
 from textual.scroll_view import ScrollView
 from textual.containers import Vertical
@@ -102,6 +103,11 @@ class EnduranceLogApp(App):
 
         # Clear input field for next entry
         self.input.value = ""
+
+    def on_key(self, event: Key) -> None:
+        # Exit app if ESC is pressed.
+        if event.key == "escape":
+            self.exit()
 
     def save_log(self, entry: str) -> None:
         """
