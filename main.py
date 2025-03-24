@@ -7,7 +7,7 @@ from textual.app import App, ComposeResult
 from textual.events import Key
 from textual.widgets import Header, Footer, Input, Static
 from textual.scroll_view import ScrollView
-from textual.containers import Vertical
+from textual.containers import Vertical, VerticalScroll
 from datetime import datetime
 import asyncio
 import os
@@ -22,7 +22,7 @@ LOG_FOLDER = "logs"
 # Custom Log Viewer
 # ==================================================
 
-class LogViewer(ScrollView):
+class LogViewer(VerticalScroll):
     """
     Scrollable widget for displaying log entries.
     """
@@ -37,13 +37,12 @@ class LogViewer(ScrollView):
         log_entry.styles.display = "block"  # Add style display to entry.
 
         self.mount(log_entry)
-        # Auto-scroll to newest entry
-        self.scroll_end(animate=False)
-
+        return log_entry  # Important so the App can scroll after mounting
 
 # ==================================================
 # Main Application Class
 # ==================================================
+
 
 class EnduranceLogApp(App):
     """
@@ -96,7 +95,9 @@ class EnduranceLogApp(App):
         self.system_log("SYSTEM LAUNCH")
         self.system_log("ENDURANCE LOG SYSTEM ONLINE")
 
+
     ##### ======On Input Submitted Method======#####
+
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """
         Handles log entry submission when user presses Enter.
@@ -114,6 +115,7 @@ class EnduranceLogApp(App):
 
             # Display in the terminal UI
             self.viewer.append_log(full_entry)
+            self.set_timer(0, lambda: self.viewer.scroll_end(animate=True))
 
             # Save to file
             self.save_log(full_entry)
@@ -142,7 +144,7 @@ class EnduranceLogApp(App):
             # If key options 1 or 2 not pressed, abort
             else:
                 self.system_log("Unrecognized input. Shutdown aborted.")
-                self.awaiting_shutdown_confirmation = False  # 💥 Cancel confirmation state
+                self.awaiting_shutdown_confirmation = False  # Cancel confirmation state
             return  # Stop propagation here
 
         # If ESC pressed to exit, prompt confirmation and switch awaiting shutdown to true
@@ -186,6 +188,7 @@ class EnduranceLogApp(App):
 
         # Display in the terminal UI
         self.viewer.append_log(system_entry)
+        self.set_timer(0, lambda: self.viewer.scroll_end(animate=True))
 
         # Save to file
         self.save_log(system_entry)
