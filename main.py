@@ -6,7 +6,6 @@
 from textual.app import App, ComposeResult
 from textual.events import Key
 from textual.widgets import Header, Footer, Input, Static
-from textual.scroll_view import ScrollView
 from textual.containers import Vertical, VerticalScroll
 from datetime import datetime
 import asyncio
