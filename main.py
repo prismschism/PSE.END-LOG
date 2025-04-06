@@ -7,7 +7,7 @@ from textual.app import App, ComposeResult
 from textual.events import Key
 from textual.widgets import Header, Footer, Input, Static
 from textual.containers import Vertical, VerticalScroll
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncio
 import os
 import json
@@ -93,7 +93,6 @@ class EnduranceLogApp(App):
         # Then append system startup log
         self.system_log("SYSTEM LAUNCH")
         self.system_log("ENDURANCE LOG SYSTEM ONLINE")
-
 
     ##### ======On Input Submitted Method======#####
 
@@ -211,9 +210,9 @@ class EnduranceLogApp(App):
 ##### ======Get Timestamp Method======#####
 def get_timestamp() -> str:
     # Get current time
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     # Return formatted timestamp
-    return now.strftime("%Y-%m-%d %H:%M:%S.") + f"{int(now.microsecond / 1000):03d}"
+    return now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{int(now.microsecond / 1000):03d}" + "Z"
 
 
 # ==================================================
