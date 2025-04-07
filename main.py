@@ -207,9 +207,9 @@ class EnduranceLogApp(App):
 
     def save_log(self, entry: str) -> None:
 
-        # Saves the given log entry to a file named by date.
+        # Saves the given log entry to a file named by date
         timestamp = get_timestamp()
-        date_str = timestamp[:10]  # Extracting date from ISO 8601 date.
+        date_str = timestamp[:10]  # Extracting date from ISO 8601 date
         log_path = os.path.join(
             LOG_FOLDER, f"END_LOG_{date_str}.json")  # Full path to file
 
