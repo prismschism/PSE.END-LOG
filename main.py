@@ -13,8 +13,40 @@ import os
 import json
 
 
+# ==================================================
+# Global Variables and Methods
+# ==================================================
+
+# ===== Global Variables =====
+
+log_counter = 0
+
 # Folder where log files will be stored
 LOG_FOLDER = "logs"
+
+
+##### ======Get Timestamp Method======#####
+
+def get_timestamp() -> str:
+    # Get current time
+    now = datetime.now(timezone.utc)
+    # Return formatted timestamp
+    return now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{int(now.microsecond / 1000):03d}" + "Z"
+
+
+##### =======Fromat Log Method======#####
+
+def format_log(entry_type: str, log_message: str, source: str, level: str) -> dict:
+    global log_counter
+    log_counter += 1
+    return {
+        "timestamp": get_timestamp(),
+        "type": entry_type,
+        "message": log_message,
+        "source": source,
+        "level": level,
+        "id": f"log_{log_counter:05d}"
+    }
 
 
 # ==================================================
@@ -84,15 +116,17 @@ class EnduranceLogApp(App):
         spacer = Static("", classes="spacer", markup=False)
         spacer.styles.display = "block"
 
-        #
         self.awaiting_shutdown_confirmation = False
 
         # Mount spacer so ScrollView has a child (Ensures initial view is blank)
         self.viewer.mount(spacer)
 
-        # Then append system startup log
-        self.system_log("SYSTEM LAUNCH")
-        self.system_log("ENDURANCE LOG SYSTEM ONLINE")
+        # System startup log
+        # Source and Level keys
+        source = "system"
+        level = "sys_message"
+        self.system_log("SYSTEM LAUNCH", source, level)
+        self.system_log("ENDURANCE LOG SYSTEM ONLINE", source, level)
 
     ##### ======On Input Submitted Method======#####
 
@@ -104,19 +138,27 @@ class EnduranceLogApp(App):
         log_entry = event.value.strip()  # Remove any surrounding spaces
 
         if log_entry:
-            # Generate a precise timestamp: [YYYY-MM-DD HH:MM:SS.mmm]
+            # Get timestamp
 
             timestamp = get_timestamp()
 
+            # Set type, source, level for format_log
+            entry_type = "LOG"
+            source = "user"
+            level = "input"
+
             # Combine timestamp and message for log entries.
-            full_entry = f"[{timestamp}] [LOG]    :: {log_entry}"
+            display_entry = f"[{timestamp}] [{entry_type}]    :: {log_entry}"
 
             # Display in the terminal UI
-            self.viewer.append_log(full_entry)
-            self.set_timer(0, lambda: self.viewer.scroll_end(animate=True))
+            self.viewer.append_log(display_entry)
+            self.set_timer(0.02, lambda: self.viewer.scroll_end(animate=True))
+
+            # Format user's input for log
+            save_user_entry = format_log(entry_type, log_entry, source, level)
 
             # Save to file
-            self.save_log(full_entry)
+            self.save_log(save_user_entry)
 
         # Clear input field for next entry
         self.input.value = ""
@@ -126,37 +168,48 @@ class EnduranceLogApp(App):
         # DEBUG
         # self.debug_log(f"Key pressed: {event.key}")
 
+        # Source and Level keys
+        source = "system"
+        # sys_message for messages to user or prompt for prompts.
+        level = ""
+
         # If already awaiting shutdown confirmation
         if self.awaiting_shutdown_confirmation:
             if event.key in ("1", "2"):
+                level = "sys_message"  # Appropriate level for message.
                 if event.key == "1":
-                    self.system_log("Shutdown confirmed. Exiting END::LOG...")
+                    self.system_log(
+                        "Shutdown confirmed. Exiting END::LOG...", source, level)
                     # Sleeper to allow user to see the exit was recognized.
                     await asyncio.sleep(3)
 
                     self.exit()
                 elif event.key == "2":
-                    self.system_log("Shutdown aborted.")
+                    self.system_log("Shutdown aborted.", source, level)
                     self.awaiting_shutdown_confirmation = False
 
             # If key options 1 or 2 not pressed, abort
             else:
-                self.system_log("Unrecognized input. Shutdown aborted.")
+                self.system_log(
+                    "Unrecognized input. Shutdown aborted.", source, level)
                 self.awaiting_shutdown_confirmation = False  # Cancel confirmation state
             return  # Stop propagation here
 
         # If ESC pressed to exit, prompt confirmation and switch awaiting shutdown to true
         if event.key == "escape":
+            level = "prompt"  # Appropriate level of message.
             self.awaiting_shutdown_confirmation = True
             self.set_focus(None)
-            self.system_log("TERMINATE PROGRAM? 1. Confirm    2. Abort")
+            self.system_log(
+                "TERMINATE PROGRAM? 1. Confirm    2. Abort", source, level)
 
     ##### ======Save Log Method======#####
 
     def save_log(self, entry: str) -> None:
 
         # Saves the given log entry to a file named by date.
-        date_str = datetime.now().strftime("%Y-%m-%d")  # File name based on date
+        timestamp = get_timestamp()
+        date_str = timestamp[:10]  # Extracting date from ISO 8601 date.
         log_path = os.path.join(
             LOG_FOLDER, f"END_LOG_{date_str}.json")  # Full path to file
 
@@ -175,23 +228,27 @@ class EnduranceLogApp(App):
             json.dump(logs, f, indent=2)
 
     ##### ======System Log Method======#####
-    def system_log(self, message: str) -> None:
+    def system_log(self, message: str, source: str, level: str) -> None:
 
         # Generate precise timestamp
-
         timestamp = get_timestamp()
 
+        # Entry type
+        entry_type = "SYSTEM"
+
         # Combine timestamp and message for log entries.
-        system_entry = f"[{timestamp}] [SYSTEM] :: {message}"
+        display_system_entry = f"[{timestamp}] [SYSTEM] :: {message}"
 
         # Display in the terminal UI
-        self.viewer.append_log(system_entry)
-        self.set_timer(0, lambda: self.viewer.scroll_end(animate=True))
+        self.viewer.append_log(display_system_entry)
+        self.set_timer(0.02, lambda: self.viewer.scroll_end(animate=True))
 
-        # Save to file
-        self.save_log(system_entry)
+        # Format_log for JSON.
+        save_system_entry = format_log(entry_type, message, source, level)
+        # Save to JSON
+        self.save_log(save_system_entry)
 
-    def debug_log(self, message: str) -> None:
+    def debug_log(self, message: str, source: str, level: str) -> None:
 
         # Get precise timestamp
         timestamp = get_timestamp()
@@ -199,26 +256,15 @@ class EnduranceLogApp(App):
         debug_entry = f"[{timestamp}] [DEBUG]  :: {message}"
         # Display in terminal UI
         self.viewer.append_log(debug_entry)
-        # Save to file
-        self.save_log(debug_entry)
 
-
-# ==================================================
-# Global Methods
-# ==================================================
-
-##### ======Get Timestamp Method======#####
-def get_timestamp() -> str:
-    # Get current time
-    now = datetime.now(timezone.utc)
-    # Return formatted timestamp
-    return now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{int(now.microsecond / 1000):03d}" + "Z"
+        # Format log for JSON
+        save_debug_log = format_log("DEBUG", message, source, level)
+        # Save to JSON
+        self.save_log(save_debug_log)
 
 
 # ==================================================
 # Launch the App
 # ==================================================
-
-
 if __name__ == "__main__":
     EnduranceLogApp().run()
