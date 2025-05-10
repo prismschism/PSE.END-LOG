@@ -21,6 +21,7 @@ import uuid  # In progress
 # ===== Global Variables =====
 
 log_counter = -2
+session = str(uuid.uuid4().hex[:6])
 
 # Folder where log files will be stored
 LOG_FOLDER = "logs"
@@ -37,16 +38,19 @@ def get_timestamp() -> str:
 
 ##### =======Fromat Log Method======#####
 
-def format_log(entry_type: str, log_message: str, source: str, level: str) -> dict:
+def format_log(entry_type: str, log_message: str, source: str, level: str, session: str) -> dict:
     global log_counter
     log_counter += 1
+
     return {
-        "timestamp": get_timestamp(),
+        "session_id": f"username_{session}",
+        "instance_count": log_counter,
         "type": entry_type,
-        "message": log_message,
         "source": source,
         "level": level,
-        "id": f"{log_counter:05d}_{uuid.uuid4().hex[:6]}"
+        "message": log_message,
+        "message_id": uuid.uuid4().hex[:6],
+        "timestamp": get_timestamp()
     }
 
 
@@ -156,7 +160,8 @@ class EnduranceLogApp(App):
             self.set_timer(0.02, lambda: self.viewer.scroll_end(animate=True))
 
             # Format user's input for log
-            save_user_entry = format_log(entry_type, log_entry, source, level)
+            save_user_entry = format_log(
+                entry_type, log_entry, source, level, session)
 
             # Save to file
             self.save_log(save_user_entry)
@@ -246,7 +251,8 @@ class EnduranceLogApp(App):
         self.set_timer(0.02, lambda: self.viewer.scroll_end(animate=True))
 
         # Format_log for JSON.
-        save_system_entry = format_log(entry_type, message, source, level)
+        save_system_entry = format_log(
+            entry_type, message, source, level, session)
         # Save to JSON
         self.save_log(save_system_entry)
 
