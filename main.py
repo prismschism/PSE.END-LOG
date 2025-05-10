@@ -11,14 +11,12 @@ from datetime import datetime, timezone
 import asyncio
 import os
 import json
-import uuid  # In progress
+import uuid
 
 
 # ==================================================
 # Global Variables and Methods
 # ==================================================
-
-# ===== Global Variables =====
 
 
 # Folder where log files will be stored
@@ -28,7 +26,7 @@ LOG_FOLDER = "logs"
 ##### ======Get Timestamp Method======#####
 
 def get_timestamp() -> str:
-    # Get current time
+    # Get current time in UTC zone.
     now = datetime.now(timezone.utc)
     # Return formatted timestamp
     return now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{int(now.microsecond / 1000):03d}" + "Z"
@@ -69,6 +67,7 @@ class EnduranceLogApp(App):
 
     CSS_PATH = "themes/endlog.tcss"  # CSS styling
 
+    # Bool initialized for later shutdown prompt use.
     awaiting_shutdown_confirmation = False
 
     def __init__(self):
@@ -124,9 +123,9 @@ class EnduranceLogApp(App):
 
     def format_log(self, entry_type: str, log_message: str, source: str, level: str) -> dict:
         self.log_counter += 1
-        session_id = self.session
+
         return {
-            "session_id": f"username_{session_id}",
+            "session_id": f"username_{self.session}",
             "instance_count": self.log_counter,
             "type": entry_type,
             "source": source,
