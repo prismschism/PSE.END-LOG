@@ -129,21 +129,26 @@ class EnduranceLogApp(App):
 
         ##### =======Fromat Log Method======#####
 
-    def format_log(self, entry_type: str, log_message: str, source: str, level: str) -> dict:
+    def format_log(self, entry_type: str, log_message: str, source: str, level: str, emotion: str = None, intensity: int = None) -> dict:
 
-        self.log_counter += 1
+        self.log_counter += 1  # Count +1 for every entry.
 
-        return {
+        log_entry = {
             "username": self.username,
             "session_id": self.session,
-            "instance_count": self.log_counter,
-            "type": entry_type,
+            "session_index": self.log_counter,
+            "entry_type": entry_type,
             "source": source,
             "level": level,
             "message": log_message,
             "message_id": uuid.uuid4().hex[:6],
             "timestamp": get_timestamp()
         }
+        if emotion is not None:
+            log_entry["emotion"] = emotion
+        if intensity is not None:
+            log_entry["intensity"] = intensity
+        return log_entry
 
     ##### ======On Input Submitted Method======#####
 
@@ -183,8 +188,10 @@ class EnduranceLogApp(App):
 
     ##### ======On Key Method======#####
     async def on_key(self, event: Key) -> None:
-        # DEBUG
-        # self.debug_log(f"Key pressed: {event.key}")
+        # DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        self.debug_log(f"Key pressed: {event.key}",
+                       source="SYSTEM", level="user_press_debug")
+        # DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # Source and Level keys
         source = "system"
@@ -276,6 +283,7 @@ class EnduranceLogApp(App):
         debug_entry = f"[{timestamp}] [DEBUG]  :: {message}"
         # Display in terminal UI
         self.viewer.append_log(debug_entry)
+        self.set_timer(0.02, lambda: self.viewer.scroll_end(animate=True))
 
         # Format log for JSON
         save_debug_log = self.format_log("DEBUG", message, source, level)
