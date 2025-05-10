@@ -72,9 +72,9 @@ class EnduranceLogApp(App):
 
     def __init__(self):
         super().__init__()
-        self.username = "usernamePlaceHolder"
+        self.username = "anonymous_user"
         self.session = str(uuid.uuid4().hex[:6])
-        self.log_counter = -2
+        self.log_counter = 0
 
     ##### ======Compose Method======#####
     def compose(self) -> ComposeResult:
@@ -116,16 +116,26 @@ class EnduranceLogApp(App):
         # Source and Level keys
         source = "system"
         level = "sys_message"
+
+        # !!!Count to keep track of initial system prompts and leave first user interaction as log_counter = 1.
+        self.log_counter = -3
+
         self.system_log("SYSTEM LAUNCH", source, level)
+
         self.system_log("ENDURANCE LOG SYSTEM ONLINE", source, level)
+
+        self.system_log(
+            "Press F1 key to enter username or ESC key to exit. Otherwise, type to enter logs.", source, level)
 
         ##### =======Fromat Log Method======#####
 
     def format_log(self, entry_type: str, log_message: str, source: str, level: str) -> dict:
+
         self.log_counter += 1
 
         return {
-            "session_id": f"username_{self.session}",
+            "username": self.username,
+            "session_id": self.session,
             "instance_count": self.log_counter,
             "type": entry_type,
             "source": source,
@@ -145,11 +155,11 @@ class EnduranceLogApp(App):
         log_entry = event.value.strip()  # Remove any surrounding spaces
 
         if log_entry:
-            # Get timestamp
 
+            # Get timestamp
             timestamp = get_timestamp()
 
-            # Set type, source, level for format_log
+            # Set type, source, level for passing to format_log
             entry_type = "LOG"
             source = "user"
             level = "input"
@@ -181,7 +191,7 @@ class EnduranceLogApp(App):
         # sys_message for messages to user or prompt for prompts.
         level = ""
 
-        # If already awaiting shutdown confirmation
+        # If already awaiting shutdown confirmation i.e. bool == True
         if self.awaiting_shutdown_confirmation:
             if event.key in ("1", "2"):
                 level = "sys_message"  # Appropriate level for message.
