@@ -20,8 +20,6 @@ import uuid  # In progress
 
 # ===== Global Variables =====
 
-log_counter = -2
-session = str(uuid.uuid4().hex[:6])
 
 # Folder where log files will be stored
 LOG_FOLDER = "logs"
@@ -34,24 +32,6 @@ def get_timestamp() -> str:
     now = datetime.now(timezone.utc)
     # Return formatted timestamp
     return now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{int(now.microsecond / 1000):03d}" + "Z"
-
-
-##### =======Fromat Log Method======#####
-
-def format_log(entry_type: str, log_message: str, source: str, level: str, session: str) -> dict:
-    global log_counter
-    log_counter += 1
-
-    return {
-        "session_id": f"username_{session}",
-        "instance_count": log_counter,
-        "type": entry_type,
-        "source": source,
-        "level": level,
-        "message": log_message,
-        "message_id": uuid.uuid4().hex[:6],
-        "timestamp": get_timestamp()
-    }
 
 
 # ==================================================
@@ -75,6 +55,7 @@ class LogViewer(VerticalScroll):
         self.mount(log_entry)
         return log_entry  # Important so the App can scroll after mounting
 
+
 # ==================================================
 # Main Application Class
 # ==================================================
@@ -89,6 +70,12 @@ class EnduranceLogApp(App):
     CSS_PATH = "themes/endlog.tcss"  # CSS styling
 
     awaiting_shutdown_confirmation = False
+
+    def __init__(self):
+        super().__init__()
+        self.username = "usernamePlaceHolder"
+        self.session = str(uuid.uuid4().hex[:6])
+        self.log_counter = -2
 
     ##### ======Compose Method======#####
     def compose(self) -> ComposeResult:
@@ -133,6 +120,22 @@ class EnduranceLogApp(App):
         self.system_log("SYSTEM LAUNCH", source, level)
         self.system_log("ENDURANCE LOG SYSTEM ONLINE", source, level)
 
+        ##### =======Fromat Log Method======#####
+
+    def format_log(self, entry_type: str, log_message: str, source: str, level: str) -> dict:
+        self.log_counter += 1
+        session_id = self.session
+        return {
+            "session_id": f"username_{session_id}",
+            "instance_count": self.log_counter,
+            "type": entry_type,
+            "source": source,
+            "level": level,
+            "message": log_message,
+            "message_id": uuid.uuid4().hex[:6],
+            "timestamp": get_timestamp()
+        }
+
     ##### ======On Input Submitted Method======#####
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -160,8 +163,8 @@ class EnduranceLogApp(App):
             self.set_timer(0.02, lambda: self.viewer.scroll_end(animate=True))
 
             # Format user's input for log
-            save_user_entry = format_log(
-                entry_type, log_entry, source, level, session)
+            save_user_entry = self.format_log(
+                entry_type, log_entry, source, level)
 
             # Save to file
             self.save_log(save_user_entry)
@@ -243,7 +246,7 @@ class EnduranceLogApp(App):
         # Entry type
         entry_type = "SYSTEM"
 
-        # Combine timestamp and message for log entries.
+        # Combine timestamp and message for displaying System entries.
         display_system_entry = f"[{timestamp}] [SYSTEM] :: {message}"
 
         # Display in the terminal UI
@@ -251,8 +254,8 @@ class EnduranceLogApp(App):
         self.set_timer(0.02, lambda: self.viewer.scroll_end(animate=True))
 
         # Format_log for JSON.
-        save_system_entry = format_log(
-            entry_type, message, source, level, session)
+        save_system_entry = self.format_log(
+            entry_type, message, source, level)
         # Save to JSON
         self.save_log(save_system_entry)
 
@@ -266,7 +269,7 @@ class EnduranceLogApp(App):
         self.viewer.append_log(debug_entry)
 
         # Format log for JSON
-        save_debug_log = format_log("DEBUG", message, source, level)
+        save_debug_log = self.format_log("DEBUG", message, source, level)
         # Save to JSON
         self.save_log(save_debug_log)
 
