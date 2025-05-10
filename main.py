@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 import asyncio
 import os
 import json
+import uuid  # In progress
 
 
 # ==================================================
@@ -19,7 +20,7 @@ import json
 
 # ===== Global Variables =====
 
-log_counter = 0
+log_counter = -2
 
 # Folder where log files will be stored
 LOG_FOLDER = "logs"
@@ -45,7 +46,7 @@ def format_log(entry_type: str, log_message: str, source: str, level: str) -> di
         "message": log_message,
         "source": source,
         "level": level,
-        "id": f"log_{log_counter:05d}"
+        "id": f"{log_counter:05d}_{uuid.uuid4().hex[:6]}"
     }
 
 
@@ -190,6 +191,7 @@ class EnduranceLogApp(App):
 
             # If key options 1 or 2 not pressed, abort
             else:
+                level = "sys_message"  # Appropriate level for message
                 self.system_log(
                     "Unrecognized input. Shutdown aborted.", source, level)
                 self.awaiting_shutdown_confirmation = False  # Cancel confirmation state
