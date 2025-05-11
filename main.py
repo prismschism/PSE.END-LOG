@@ -127,11 +127,11 @@ class EnduranceLogApp(App):
         self.log_counter = -3
 
         self.system_log("SYSTEM LAUNCH", source, level)
-
+        self.set_timer(0.02, lambda: self.viewer.scroll_end(animate=True))
         self.system_log("ENDURANCE LOG SYSTEM ONLINE", source, level)
-
+        self.set_timer(0.02, lambda: self.viewer.scroll_end(animate=True))
         self.system_log(
-            "Press F1 key to enter username or ESC key to exit. Otherwise, type to enter logs.", source, level)
+            "F1-enter username, F2-SENSE MODE, ESC-exit program. Type to enter logs.", source, level)
 
         ##### =======Fromat Log Method======#####
 
@@ -204,12 +204,11 @@ class EnduranceLogApp(App):
                     )
                     self.save_log(log_entry)
 
-                    # Display it
-                    timestamp = get_timestamp()
-                    display = f"[{timestamp}] [SYSTEM] :: SENSE MODE Entry Submitted"
-                    self.viewer.append_log(display)
-                    timestamp = get_timestamp()
-                    display = f"[{timestamp}] [LOG]    :: SENSE Message: {self.sense_message} || Tag:({self.emotion}) Intensity: {self.intensity}"
+                    # Log and display result
+                    self.system_log(" - Entry Submitted -",
+                                    source="sytem", level="sys_message")
+
+                    display = f"[{get_timestamp()}] [LOG]    :: SENSE Message: {self.sense_message} || Tag:({self.emotion}) Intensity: {self.intensity}"
                     self.viewer.append_log(display)
                     self.set_timer(
                         0.02, lambda: self.viewer.scroll_end(animate=True))
