@@ -76,6 +76,12 @@ class EnduranceLogApp(App):
         self.session = str(uuid.uuid4().hex[:6])
         self.log_counter = 0
 
+        # EM::SENSE integration
+        self.sense_mode = False
+        self.sense_message = ""
+        self.emotion = ""
+        self.intensity = None
+
     ##### ======Compose Method======#####
     def compose(self) -> ComposeResult:
         """
@@ -157,9 +163,73 @@ class EnduranceLogApp(App):
         Handles log entry submission when user presses Enter.
         Adds the entry to both the display and the log file.
         """
-        log_entry = event.value.strip()  # Remove any surrounding spaces
+        user_entry = event.value.strip()  # Remove any surrounding spaces
 
-        if log_entry:
+        # EM::SENSE integration. Input capture.
+        # EM::SENSE integration. Input capture.
+        if self.sense_mode:
+            # Step 1: Get the message
+            if not self.sense_message:
+                self.sense_message = user_entry
+                self.input.placeholder = "..."
+                self.system_log("type a keyword tag: happy, sad, angry, etc. ",
+                                source="SENSE_MODE", level="input_prompt")
+                self.input.value = ""
+                return
+
+            # Step 2: Get the emotion type
+            elif not self.emotion:
+                self.emotion = user_entry.lower()
+                self.input.placeholder = "..."
+                self.system_log("Type an intensity between 1 and 10: (1-lowest, 10 highest) ",
+                                source="SENSE_MODE", level="input_prompt")
+                self.input.value = ""
+                return
+
+            # Step 3: Get intensity and finalize log
+            else:
+                try:
+                    self.intensity = int(user_entry)
+                    if not (1 <= self.intensity <= 10):
+                        raise ValueError
+
+                    # Format and save the emotional log
+                    log_entry = self.format_log(
+                        entry_type="LOG",
+                        log_message=self.sense_message,
+                        source="user",
+                        level="SENSE",
+                        emotion=self.emotion,
+                        intensity=self.intensity
+                    )
+                    self.save_log(log_entry)
+
+                    # Display it
+                    timestamp = get_timestamp()
+                    display = f"[{timestamp}] [SYSTEM] :: SENSE MODE Entry Submitted"
+                    self.viewer.append_log(display)
+                    timestamp = get_timestamp()
+                    display = f"[{timestamp}] [LOG]    :: SENSE Message: {self.sense_message} || Tag:({self.emotion}) Intensity: {self.intensity}"
+                    self.viewer.append_log(display)
+                    self.set_timer(
+                        0.02, lambda: self.viewer.scroll_end(animate=True))
+
+                except ValueError:
+                    self.system_log(
+                        "Please enter a number between 1 and 10.", "SYSTEM", "ValueError")
+                    self.input.value = ""
+                    return
+
+                # Reset EM::SENSE state
+                self.sense_mode = False
+                self.sense_message = ""
+                self.emotion = ""
+                self.intensity = None
+                self.input.placeholder = "Type log entry and press Enter..."
+                self.input.value = ""
+                return
+
+        if user_entry:
 
             # Get timestamp
             timestamp = get_timestamp()
@@ -170,7 +240,7 @@ class EnduranceLogApp(App):
             level = "input"
 
             # Combine timestamp and message for log entries.
-            display_entry = f"[{timestamp}] [{entry_type}]    :: {log_entry}"
+            display_entry = f"[{timestamp}] [{entry_type}]    :: {user_entry}"
 
             # Display in the terminal UI
             self.viewer.append_log(display_entry)
@@ -178,7 +248,7 @@ class EnduranceLogApp(App):
 
             # Format user's input for log
             save_user_entry = self.format_log(
-                entry_type, log_entry, source, level)
+                entry_type, user_entry, source, level)
 
             # Save to file
             self.save_log(save_user_entry)
@@ -189,14 +259,25 @@ class EnduranceLogApp(App):
     ##### ======On Key Method======#####
     async def on_key(self, event: Key) -> None:
         # DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        self.debug_log(f"Key pressed: {event.key}",
-                       source="SYSTEM", level="user_press_debug")
+        # self.debug_log(f"Key pressed: {event.key}", source="SYSTEM", level="user_onkey_press_debug")
         # DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # Source and Level keys
         source = "system"
         # sys_message for messages to user or prompt for prompts.
         level = ""
+
+        # EM::SENSE integration
+        if event.key == "f2":
+            self.sense_mode = True
+            self.system_log("- EM::SENSE Mode - ", source, level="sys_message")
+            self.system_log(
+                "Please follow prompts below.", source, level="prompt")
+            self.system_log(
+                "Enter a description of how you feel:", source, level="prompt")
+            self.input.placeholder = "Describe how you're feeling:"
+            self.input.value = ""
+            return
 
         # If already awaiting shutdown confirmation i.e. bool == True
         if self.awaiting_shutdown_confirmation:
