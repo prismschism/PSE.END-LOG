@@ -76,7 +76,7 @@ class EnduranceLogApp(App):
         self.session = str(uuid.uuid4().hex[:6])
         self.log_counter = 0
 
-        # EM::SENSE integration
+        # EM::SENSE integration variables.
         self.sense_mode = False
         self.sense_message = ""
         self.emotion = ""
@@ -139,6 +139,7 @@ class EnduranceLogApp(App):
 
         self.log_counter += 1  # Count +1 for every entry.
 
+        # Log formatting for JSON file.
         log_entry = {
             "username": self.username,
             "session_id": self.session,
@@ -150,6 +151,8 @@ class EnduranceLogApp(App):
             "message_id": uuid.uuid4().hex[:6],
             "timestamp": get_timestamp()
         }
+
+        # Conditionals for EM::SENSE data.
         if emotion is not None:
             log_entry["emotion"] = emotion
         if intensity is not None:
