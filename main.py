@@ -271,6 +271,7 @@ class EnduranceLogApp(App):
 
         # EM::SENSE integration
         if event.key == "f2":
+            source = "SENSE_MODE"
             self.sense_mode = True
             self.system_log("- EM::SENSE Mode - ", source, level="sys_message")
             self.system_log(
@@ -283,6 +284,7 @@ class EnduranceLogApp(App):
 
         # If already awaiting shutdown confirmation i.e. bool == True
         if self.awaiting_shutdown_confirmation:
+            source = "system"
             if event.key in ("1", "2"):
                 level = "sys_message"  # Appropriate level for message.
                 if event.key == "1":
